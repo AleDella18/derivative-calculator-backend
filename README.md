@@ -2,6 +2,7 @@
 
 Backend API for a derivative calculator application. The service authenticates users, validates mathematical expressions, computes symbolic derivatives, stores previously computed functions in a Turso/libSQL database, and generates PNG plots for derivative results.
 
+
 ## Features
 
 - User signup and signin with hashed passwords and JWT cookies.
