@@ -35,7 +35,7 @@ app.mount("/imgs", StaticFiles(directory=str(IMGS_DIR)), name="imgs")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://derivate-calculator-frontend.vercel.app/",
+        "https://derivate-calculator-frontend.vercel.app",
         "http://localhost:3000",
         "http://derivator.duckdns.org",
     ],
