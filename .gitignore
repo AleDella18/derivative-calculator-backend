@@ -1,0 +1,21 @@
+# Cache di Python (Byte-compiled / optimized / DLL files)
+__pycache__
+*.py[cod]
+*$py.class
+
+# Cache di Pytest
+.pytest_cache/
+
+# Opzionale: Report di copertura (se usi pytest-cov)
+.coverage
+htmlcov/
+
+# Opzionale: Ambienti virtuali (caldamente consigliato escluderli)
+venv/
+.venv/
+env/
+.env
+.env.local
+
+# Settings VSCode
+.vscode
