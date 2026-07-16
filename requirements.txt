@@ -3,6 +3,7 @@ uvicorn==0.33.0
 libsql>=0.1.11
 python-jose[cryptography]
 passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
 python-dotenv
 sympy==1.13.3
 matplotlib==3.10.8
