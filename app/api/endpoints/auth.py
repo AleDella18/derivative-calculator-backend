@@ -39,7 +39,13 @@ def signin(user: User, response: Response, request: Request):
     
 
     response.set_cookie(
-        key="auth_token", value=token, httponly=True, samesite="none", secure=True
+        key="auth_token",
+        value=token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        domain=".derivative-calculator.duckdns.org",
+        path="/",
     )
 
     return {"message": "Login completed"}
