@@ -43,7 +43,7 @@ def signin(user: User, response: Response, request: Request):
         value=token,
         httponly=True,
         secure=True,
-        samesite="none",
+        samesite="lax",
         path="/",
     )
 
