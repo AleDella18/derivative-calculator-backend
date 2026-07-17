@@ -82,7 +82,7 @@ The application loads environment variables from the process environment and sup
 | --- | --- | --- | --- |
 | `TURSO_DATABASE_URL` | Yes | None | Turso/libSQL database URL passed to `libsql.connect`. The application fails at startup if it is missing. |
 | `TURSO_AUTH_TOKEN` | Yes | None | Turso/libSQL authentication token passed to `libsql.connect`. The application fails at startup if it is missing. |
-| `SECRET_KEY` | No | `;+z8X*(cmbN|#si#` | Secret used to sign and verify JWT authentication cookies. Set this in every non-local environment. |
+| `SECRET_KEY` | No | `BrUJTuTS28idUj5sfo2370BkUREjY3M2CJjp01UVrNm` | Secret used to sign and verify JWT authentication cookies. Set this in every non-local environment. |
 
 Example `.env` file:
 

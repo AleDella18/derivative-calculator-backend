@@ -107,7 +107,7 @@ def is_variable(i, tokens):
         return [False, 0]
 
 
-SECRET_KEY = os.getenv("SECRET_KEY", ";+z8X*(cmbN|#si#")
+SECRET_KEY = os.getenv("SECRET_KEY", "BrUJTuTS28idUj5sfo2370BkUREjY3M2CJjp01UVrNm")
 ALGORITHM = "HS256"
 
 

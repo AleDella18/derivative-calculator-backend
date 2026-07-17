@@ -9,7 +9,7 @@ from app.utils.security import hash_password, verify_password
 
 router = APIRouter(tags=["auth"])
 
-SECRET_KEY = os.getenv("SECRET_KEY", ";+z8X*(cmbN|#si#")
+SECRET_KEY = os.getenv("SECRET_KEY", "BrUJTuTS28idUj5sfo2370BkUREjY3M2CJjp01UVrNm")
 ALGORITHM = "HS256"
 TOKEN_EXPIRE_MINUTES = 30
 
@@ -21,6 +21,8 @@ def signin(user: User, response: Response, request: Request):
     db = request.app.state.db
 
     stored_password_hash = check_user_password(user.username, db)
+    
+    
     if stored_password_hash is None:
         raise HTTPException(status_code=400, detail="User doesn't exist")
 
@@ -34,6 +36,7 @@ def signin(user: User, response: Response, request: Request):
         SECRET_KEY,
         algorithm=ALGORITHM,
     )
+    
 
     response.set_cookie(
         key="auth_token", value=token, httponly=True, samesite="none", secure=True
