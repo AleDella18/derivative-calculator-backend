@@ -44,7 +44,7 @@ def signin(user: User, response: Response, request: Request):
         httponly=True,
         secure=True,
         samesite="lax",
-        domain="-derivative-calculator.duckdns.org",
+        domain="derivative-calculator.duckdns.org",
         path="/",
     )
 
