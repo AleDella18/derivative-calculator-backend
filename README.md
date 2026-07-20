@@ -92,7 +92,7 @@ The application loads environment variables from the process environment and sup
 | `TURSO_DATABASE_URL` | Yes | None | Turso/libSQL database URL passed to `libsql.connect`. The application fails at startup if it is missing. |
 | `TURSO_AUTH_TOKEN` | Yes | None | Turso/libSQL authentication token passed to `libsql.connect`. The application fails at startup if it is missing. |
 | `SECRET_KEY` | No | Development default | Secret used to sign and verify JWT authentication cookies. Set this in every non-local environment. |
-| `VERCEL_BLOB_READ_WRITE_TOKEN` | Yes | None | Read/write token for the public Vercel Blob store. Startup fails with a clear error when it is missing or empty. |
+| `BLOB_READ_WRITE_TOKEN` | Yes | None | Read/write token for the public Vercel Blob store. Startup fails with a clear error when it is missing or empty. |
 
 Example `.env` file:
 
@@ -100,7 +100,7 @@ Example `.env` file:
 TURSO_DATABASE_URL=libsql://your-database.turso.io
 TURSO_AUTH_TOKEN=your-turso-token
 SECRET_KEY=replace-with-a-secure-random-secret
-VERCEL_BLOB_READ_WRITE_TOKEN=vercel_blob_rw_your-token
+BLOB_READ_WRITE_TOKEN=vercel_blob_rw_your-token
 ```
 
 ## Running the project

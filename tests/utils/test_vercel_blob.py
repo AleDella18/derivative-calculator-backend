@@ -29,7 +29,7 @@ async def test_upload_png_returns_public_url(monkeypatch):
     FakeAsyncClient.response = httpx.Response(
         200, json={"url": public_url}, request=request
     )
-    monkeypatch.setenv("VERCEL_BLOB_READ_WRITE_TOKEN", "secret-token")
+    monkeypatch.setenv("BLOB_READ_WRITE_TOKEN", "secret-token")
     monkeypatch.setattr(vercel_blob.httpx, "AsyncClient", FakeAsyncClient)
 
     result = await vercel_blob.upload_png(b"png bytes", "graphs/id.png")
@@ -44,11 +44,11 @@ async def test_upload_png_returns_public_url(monkeypatch):
 
 
 def test_missing_blob_token_has_clear_safe_error(monkeypatch):
-    monkeypatch.delenv("VERCEL_BLOB_READ_WRITE_TOKEN", raising=False)
+    monkeypatch.delenv("BLOB_READ_WRITE_TOKEN", raising=False)
 
     with pytest.raises(
         vercel_blob.VercelBlobError,
-        match="VERCEL_BLOB_READ_WRITE_TOKEN is required",
+        match="BLOB_READ_WRITE_TOKEN is required",
     ):
         vercel_blob.get_blob_token()
 
@@ -57,7 +57,7 @@ def test_missing_blob_token_has_clear_safe_error(monkeypatch):
 async def test_failed_http_response_raises_domain_error(monkeypatch):
     request = httpx.Request("PUT", "https://blob.vercel-storage.com/graphs/id.png")
     FakeAsyncClient.response = httpx.Response(503, request=request)
-    monkeypatch.setenv("VERCEL_BLOB_READ_WRITE_TOKEN", "secret-token")
+    monkeypatch.setenv("BLOB_READ_WRITE_TOKEN", "secret-token")
     monkeypatch.setattr(vercel_blob.httpx, "AsyncClient", FakeAsyncClient)
 
     with pytest.raises(vercel_blob.VercelBlobError, match="status 503"):
@@ -69,7 +69,7 @@ async def test_failed_http_response_raises_domain_error(monkeypatch):
 async def test_malformed_response_raises_domain_error(monkeypatch, payload):
     request = httpx.Request("PUT", "https://blob.vercel-storage.com/graphs/id.png")
     FakeAsyncClient.response = httpx.Response(200, json=payload, request=request)
-    monkeypatch.setenv("VERCEL_BLOB_READ_WRITE_TOKEN", "secret-token")
+    monkeypatch.setenv("BLOB_READ_WRITE_TOKEN", "secret-token")
     monkeypatch.setattr(vercel_blob.httpx, "AsyncClient", FakeAsyncClient)
 
     with pytest.raises(vercel_blob.VercelBlobError):

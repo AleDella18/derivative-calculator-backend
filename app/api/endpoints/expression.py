@@ -55,6 +55,7 @@ async def compute_expression(req: ExpressionRequest, request: Request):
             raise HTTPException(status_code=400, detail=derivative)
 
         image_path = await graphic_generator(derivative, req.diff_var)
+        logger.info(image_path)
         save_derivative(username, req.expr, derivative, db, image_path)
 
         return {"derivative": derivative, "img_path": image_path}

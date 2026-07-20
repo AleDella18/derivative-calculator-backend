@@ -17,9 +17,9 @@ class VercelBlobError(RuntimeError):
 
 def get_blob_token() -> str:
     """Return the configured Blob token, or raise a safe configuration error."""
-    token = os.getenv("VERCEL_BLOB_READ_WRITE_TOKEN", "").strip()
+    token = os.getenv("BLOB_READ_WRITE_TOKEN", "").strip()
     if not token:
-        raise VercelBlobError("VERCEL_BLOB_READ_WRITE_TOKEN is required")
+        raise VercelBlobError("BLOB_READ_WRITE_TOKEN is required")
     return token
 
 
