@@ -9,7 +9,6 @@ from app.repository.expressions import (
     get_image_path,
     save_derivative,
     get_function_id,
-    save_graphic,
 )
 import logging
 import os
@@ -24,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 @router.post("/expression", response_model=ExpressionResponse)
-def compute_expression(req: ExpressionRequest, request: Request):
+async def compute_expression(req: ExpressionRequest, request: Request):
     try:
         token = request.headers.get("cookie")
 
@@ -55,10 +54,9 @@ def compute_expression(req: ExpressionRequest, request: Request):
             )
             raise HTTPException(status_code=400, detail=derivative)
 
-        save_derivative(username, req.expr, derivative, db)
-        function_id = get_function_id(req.expr, db)
-        image_path = graphic_generator(derivative, req.diff_var, function_id)
-        save_graphic(function_id, image_path, db)
+        image_path = await graphic_generator(derivative, req.diff_var)
+        logger.info(image_path)
+        save_derivative(username, req.expr, derivative, db, image_path)
 
         return {"derivative": derivative, "img_path": image_path}
 
@@ -72,5 +70,3 @@ def compute_expression(req: ExpressionRequest, request: Request):
     except Exception as e:
         logger.error("Unexpected error while processing '%s': %s", req.expr, str(e))
         raise HTTPException(status_code=500, detail="Internal server error")
-
-

@@ -1,6 +1,6 @@
 # derivative-calculator-backend
 
-Backend API for a derivative calculator application. The service authenticates users, validates mathematical expressions, computes symbolic derivatives, stores previously computed functions in a Turso/libSQL database, and generates PNG plots for derivative results.
+Backend API for a derivative calculator application. The service authenticates users, validates mathematical expressions, computes symbolic derivatives, stores previously computed functions in a Turso/libSQL database, and generates PNG plots in memory and stores them in Vercel Blob.
 
 
 ## Features
@@ -10,19 +10,26 @@ Backend API for a derivative calculator application. The service authenticates u
 - Expression validation for invalid characters, parenthesis issues, missing operators, missing function arguments, and division by zero.
 - Symbolic differentiation and simplification for supported arithmetic operators and mathematical functions.
 - Reuse of cached derivatives already stored in the database.
-- PNG graph generation for computed derivatives under the `imgs/` static directory.
+- In-memory PNG graph generation with public storage in Vercel Blob.
 - Built-in FastAPI OpenAPI and Swagger UI documentation.
 
 ## Architecture overview
 
 The application is a FastAPI service organized around API routers, service-layer derivative logic, repository functions, and a Turso/libSQL database connection manager.
 
-- `app/main.py` creates the FastAPI application, configures CORS, mounts static image files, initializes logging, and opens/closes the database connection during the application lifespan.
+- `app/main.py` creates the FastAPI application, configures CORS, validates required storage configuration, initializes logging, and opens/closes the database connection during the application lifespan.
 - `app/api/endpoints/` exposes authentication and expression endpoints.
 - `app/services/` contains parser, differentiator, simplifier, derivative orchestration, and graph generation logic.
 - `app/validator/` validates and normalizes incoming expression strings before differentiation.
-- `app/repository/` contains database access functions for users, functions, derivatives, and generated graph paths.
+- `app/repository/` contains database access functions for users, functions, derivatives, and generated graph URLs.
 - `app/schemas/` defines Pydantic request and response models.
+
+For a new expression, the endpoint computes the derivative, renders its graph
+into an in-memory PNG buffer, and delegates the upload to the reusable Vercel
+Blob REST client. Only after Blob returns a validated public URL does the
+repository insert the derivative and URL into `FUNCTIONS`. Cached expressions
+skip graph rendering and upload and return the value already stored in
+`path_graph`.
 
 ## Tech stack
 
@@ -35,6 +42,8 @@ The application is a FastAPI service organized around API routers, service-layer
 - Passlib with bcrypt-sha256 password hashing
 - SymPy for expression conversion and simplification support
 - Matplotlib and NumPy for graph generation
+- Vercel Blob for public graph storage
+- HTTPX for asynchronous Blob REST API requests
 - pytest test suite
 
 ## Project structure
@@ -52,7 +61,6 @@ The application is a FastAPI service organized around API routers, service-layer
 │   ├── validator/          # Expression validation and preprocessing
 │   └── main.py             # FastAPI application entry point
 ├── db/                     # Local database file used as a schema/reference artifact
-├── imgs/                   # Generated and committed derivative graph images served at /imgs
 ├── tests/                  # Unit and API tests
 ├── requirements.txt        # Python runtime dependencies
 └── README.md               # Project documentation
@@ -62,6 +70,7 @@ The application is a FastAPI service organized around API routers, service-layer
 
 - Python 3.11 or newer is recommended.
 - A Turso/libSQL database with the expected `USERS` and `FUNCTIONS` tables.
+- A public Vercel Blob store and its read/write token.
 - `pip` and a Python virtual environment tool.
 
 ## Installation
@@ -82,7 +91,8 @@ The application loads environment variables from the process environment and sup
 | --- | --- | --- | --- |
 | `TURSO_DATABASE_URL` | Yes | None | Turso/libSQL database URL passed to `libsql.connect`. The application fails at startup if it is missing. |
 | `TURSO_AUTH_TOKEN` | Yes | None | Turso/libSQL authentication token passed to `libsql.connect`. The application fails at startup if it is missing. |
-| `SECRET_KEY` | No | `BrUJTuTS28idUj5sfo2370BkUREjY3M2CJjp01UVrNm` | Secret used to sign and verify JWT authentication cookies. Set this in every non-local environment. |
+| `SECRET_KEY` | No | Development default | Secret used to sign and verify JWT authentication cookies. Set this in every non-local environment. |
+| `BLOB_READ_WRITE_TOKEN` | Yes | None | Read/write token for the public Vercel Blob store. Startup fails with a clear error when it is missing or empty. |
 
 Example `.env` file:
 
@@ -90,6 +100,7 @@ Example `.env` file:
 TURSO_DATABASE_URL=libsql://your-database.turso.io
 TURSO_AUTH_TOKEN=your-turso-token
 SECRET_KEY=replace-with-a-secure-random-secret
+BLOB_READ_WRITE_TOKEN=vercel_blob_rw_your-token
 ```
 
 ## Running the project
@@ -116,15 +127,7 @@ FastAPI automatically exposes interactive API documentation:
 | --- | --- | --- | --- |
 | `POST` | `/signup` | Register a new user. | No |
 | `POST` | `/signin` | Authenticate a user and set the JWT cookie. | No |
-| `POST` | `/expression` | Compute or retrieve a derivative and return its graph path. | Yes |
-
-### Static files
-
-Generated derivative plots are saved in `imgs/` and served from:
-
-```text
-/imgs/{filename}.png
-```
+| `POST` | `/expression` | Compute or retrieve a derivative and return its public graph URL. | Yes |
 
 ## API documentation
 
@@ -183,7 +186,7 @@ Validation and error behavior:
 
 ### `POST /expression`
 
-Computes and stores the derivative for an expression. This endpoint requires the `auth_token` cookie created by `POST /signin`.
+Computes the derivative, generates its graph in memory, uploads the PNG to Vercel Blob, and stores the complete public URL with the derivative. Cached expressions return their stored URL without another upload. This endpoint requires the `auth_token` cookie created by `POST /signin`.
 
 Request body:
 
@@ -199,7 +202,7 @@ Successful response:
 ```json
 {
   "derivative": "(x*log(x)*cos(x) + 2*sin(x))*log(x)/x",
-  "img_path": "imgs/1.png"
+  "img_path": "https://store.public.blob.vercel-storage.com/graphs/550e8400-e29b-41d4-a716-446655440000.png"
 }
 ```
 
@@ -259,6 +262,7 @@ python-dotenv
 sympy==1.13.3
 matplotlib==3.10.8
 numpy==2.4.4
+httpx==0.28.1
 ```
 
 ## Development notes
@@ -267,7 +271,8 @@ numpy==2.4.4
 - The repository currently does not include a Makefile or package-level script runner.
 - CORS is configured for the deployed frontend, local frontend development at `http://localhost:3000`, and `http://derivator.duckdns.org`.
 - The checked-in `db/db_function.db` file shows the expected local schema shape for `USERS` and `FUNCTIONS`, but the running application connects through Turso/libSQL environment variables.
-- API tests use FastAPI's `TestClient`; install `httpx` in the development environment if running those tests directly.
+- New graph records store complete public Blob URLs in the existing `path_graph` column. Legacy rows containing `imgs/...` paths remain unchanged and are returned as stored; no automatic data migration is performed.
+- Graph upload occurs before the database insert, so failed uploads do not create rows with missing or invalid graph URLs. A database failure after upload can leave an unreferenced Blob that may be cleaned up operationally.
 
 ## Running tests
 
