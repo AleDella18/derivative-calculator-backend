@@ -1,4 +1,5 @@
-from pathlib import Path
+import io
+from uuid import uuid4
 import matplotlib
 
 matplotlib.use("Agg")
@@ -6,14 +7,26 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 from sympy import symbols, sympify, lambdify
+from app.utils.vercel_blob import upload_png
 
 
-# Generates the graphic of the given expression and saves it as a PNG file.
-# @param expr: the expression to plot.
-# @param diff_var:  The variable with respect to which the differentiation is performed.
-# @param image_name: The name of the generated PNG file (without extension).
-# @return: The relative path of the generated PNG file.
-def graphic_generator(expr, diff_var, image_name):
+async def graphic_generator(expr: str, diff_var: str) -> str:
+    """Generate a graph in memory, upload it, and return its public Blob URL.
+
+    Args:
+        expr: Mathematical expression to plot.
+        diff_var: Variable used as the graph's independent axis.
+
+    Returns:
+        The complete public Vercel Blob URL for the generated PNG.
+
+    Raises:
+        VercelBlobError: If the network upload fails or returns an invalid result.
+        Exception: Propagates expression parsing and Matplotlib plotting errors.
+
+    The PNG is never written to disk. The function performs network I/O and
+    closes both its Matplotlib figure and in-memory buffer on every path.
+    """
     x_vals = np.linspace(-50, 50, 100)
 
     x = symbols(diff_var)
@@ -23,20 +36,14 @@ def graphic_generator(expr, diff_var, image_name):
     if np.isscalar(y_vals):
         y_vals = np.full_like(x_vals, y_vals)
 
-    plt.figure()
-    plt.plot(x_vals, y_vals, label=expr)
-    plt.legend()
-
-    project_root = Path(__file__).resolve().parents[2]
-    imgs_folder = project_root / "imgs"
-    imgs_folder.mkdir(exist_ok=True)
-
-    filename = f"{image_name}.png"
-
-    absolute_path = imgs_folder / filename
-    relative_path = Path("imgs") / filename
-
-    plt.savefig(absolute_path, dpi=300, bbox_inches="tight")
-    plt.close()
-
-    return str(relative_path)
+    figure = plt.figure()
+    buffer = io.BytesIO()
+    try:
+        plt.plot(x_vals, y_vals, label=expr)
+        plt.legend()
+        figure.savefig(buffer, format="png", dpi=300, bbox_inches="tight")
+        png_data = buffer.getvalue()
+        return await upload_png(png_data, f"graphs/{uuid4()}.png")
+    finally:
+        plt.close(figure)
+        buffer.close()

@@ -15,11 +15,12 @@ def get_image_path(function_id, db):
     return row[0] if row else None
 
 
-def save_derivative(user_name, function, derivative, db):
+def save_derivative(user_name, function, derivative, db, image_url):
     user_id = get_user_id(user_name, db)
     db.execute(
-        "INSERT INTO FUNCTIONS (user_id, function, derivative) VALUES (?, ?, ?)",
-        [user_id, function, derivative],
+        "INSERT INTO FUNCTIONS (user_id, function, derivative, path_graph) "
+        "VALUES (?, ?, ?, ?)",
+        [user_id, function, derivative, image_url],
     )
     db.commit()
 
@@ -28,11 +29,3 @@ def get_function_id(expr, db):
     cur = db.execute("SELECT function_id FROM FUNCTIONS WHERE function = ?", [expr])
     row = cur.fetchone()
     return row[0] if row else None
-
-
-def save_graphic(function_id, image_path, db):
-    db.execute(
-        "UPDATE FUNCTIONS SET path_graph = ? WHERE function_id = ?",
-        [image_path, function_id],
-    )
-    db.commit()

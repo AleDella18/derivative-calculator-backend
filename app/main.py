@@ -1,18 +1,14 @@
-from pathlib import Path
 from fastapi import FastAPI
 from app.api.endpoints import api_router
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from app.core.db_manager import DBManager
-from fastapi.staticfiles import StaticFiles
 from app.core.logging_config import setup_logging
+from app.utils.vercel_blob import get_blob_token
 import logging
 from dotenv import load_dotenv
 
 load_dotenv()
-
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-IMGS_DIR = PROJECT_ROOT / "imgs"
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -22,6 +18,7 @@ db = DBManager()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    get_blob_token()
     db.connect()
     app.state.db = db
     yield
@@ -29,8 +26,6 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-
-app.mount("/imgs", StaticFiles(directory=str(IMGS_DIR)), name="imgs")
 
 app.add_middleware(
     CORSMiddleware,
