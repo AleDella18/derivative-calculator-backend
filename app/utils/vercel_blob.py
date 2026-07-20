@@ -15,30 +15,20 @@ class VercelBlobError(RuntimeError):
     """Raised when a graph cannot be uploaded to Vercel Blob."""
 
 
+# Returns the configured Vercel Blob read/write token.
+# @return: The configured Vercel Blob read/write token as a string.
 def get_blob_token() -> str:
-    """Return the configured Blob token, or raise a safe configuration error."""
     token = os.getenv("BLOB_READ_WRITE_TOKEN", "").strip()
     if not token:
         raise VercelBlobError("BLOB_READ_WRITE_TOKEN is required")
     return token
 
 
+# Uploads a PNG image to a public Vercel Blob pathname.
+# @param data: The complete PNG file content as bytes.
+# @param filename: The destination pathname of the file within the Blob store.
+# @return: The complete public URL of the uploaded PNG returned by Vercel Blob.
 async def upload_png(data: bytes, filename: str) -> str:
-    """Upload PNG bytes to a public Vercel Blob pathname.
-
-    Args:
-        data: Complete PNG file content.
-        filename: Destination pathname within the Blob store.
-
-    Returns:
-        The complete public URL returned by Vercel Blob.
-
-    Raises:
-        VercelBlobError: If configuration is missing, the request fails, Vercel
-            returns a non-success response, or its response has no valid URL.
-
-    This function performs network I/O and never writes to the local filesystem.
-    """
     if not data:
         raise VercelBlobError("Cannot upload an empty PNG")
     if not filename or filename.startswith("/") or ".." in filename.split("/"):

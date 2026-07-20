@@ -10,23 +10,11 @@ from sympy import symbols, sympify, lambdify
 from app.utils.vercel_blob import upload_png
 
 
+# Generates a graph entirely in memory, uploads it to Vercel Blob, and returns its public URL.
+# @param expr: The mathematical expression to plot.
+# @param diff_var: The variable used as the graph's independent axis.
+# @return: The complete public Vercel Blob URL of the generated PNG image.
 async def graphic_generator(expr: str, diff_var: str) -> str:
-    """Generate a graph in memory, upload it, and return its public Blob URL.
-
-    Args:
-        expr: Mathematical expression to plot.
-        diff_var: Variable used as the graph's independent axis.
-
-    Returns:
-        The complete public Vercel Blob URL for the generated PNG.
-
-    Raises:
-        VercelBlobError: If the network upload fails or returns an invalid result.
-        Exception: Propagates expression parsing and Matplotlib plotting errors.
-
-    The PNG is never written to disk. The function performs network I/O and
-    closes both its Matplotlib figure and in-memory buffer on every path.
-    """
     x_vals = np.linspace(-50, 50, 100)
 
     x = symbols(diff_var)
